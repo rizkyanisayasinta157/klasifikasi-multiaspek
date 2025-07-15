@@ -6,12 +6,21 @@ import re
 import string
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import WordPunctTokenizer
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 
-# Download stopwords dan tokenizer
-nltk.download('stopwords')
-nltk.download('punkt')
+# Tambahkan path jika kamu punya folder nltk_data sendiri (opsional)
+# nltk.data.path.append('./nltk_data')
+
+# Inisialisasi tokenizer manual (tidak butuh 'punkt')
+tokenizer = WordPunctTokenizer()
+
+# Inisialisasi stopwords secara aman (jika belum tersedia)
+try:
+    stop_words = set(stopwords.words('indonesian'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('indonesian'))
 
 # 1. Load model dan vectorizer
 @st.cache_resource
@@ -28,7 +37,7 @@ def load_slang_xlsm(path, sheet_name=0):
     df = pd.read_excel(path, sheet_name=sheet_name)
     return dict(zip(df['slang'], df['formal']))
 
-slang_dict = load_slang_xlsm("Slangword-indonesian.xlsm")  # Ganti path sesuai lokasi file
+slang_dict = load_slang_xlsm("Slangword-indonesian.xlsm")  # Pastikan file ini ada
 
 # 3. Inisialisasi Stemmer
 factory = StemmerFactory()
@@ -47,10 +56,9 @@ def preprocess_text(text):
     text = text.lower()
 
     # 3. Tokenisasi
-    tokens = word_tokenize(text)
+    tokens = tokenizer.tokenize(text)
 
     # 4. Remove stopwords
-    stop_words = set(stopwords.words('indonesian'))
     tokens = [word for word in tokens if word not in stop_words]
 
     # 5. Slangword normalization
