@@ -87,7 +87,7 @@ input_text = st.text_area("📝 Masukkan Teks:", height=170)
 
 # 8. Slider threshold
 threshold = st.slider("🔧 Threshold untuk prediksi label", 
-                      min_value=0.0, max_value=1.0, value=0.4, step=0.05)
+                      min_value=0.0, max_value=1.0, value=0.35, step=0.05)
 
 # 9. Proses saat tombol diklik
 if st.button("Prediksi"):
@@ -97,18 +97,23 @@ if st.button("Prediksi"):
         # 🔄 Preprocessing
         preprocessed = preprocess_text(input_text)
 
-        # 🔄 Vectorize dan prediksi probabilitas
-        X_input = vectorizer.transform([preprocessed])
-        Y_proba = model.predict_proba(X_input)
-        Y_proba_array = Y_proba.toarray()[0]
-        Y_pred = (Y_proba_array >= threshold).astype(int)
+        # 🚨 Validasi minimal 20 kata
+        jumlah_kata = len(preprocessed.split())
+        if jumlah_kata < 15:
+            st.warning(f"⚠️ Teks setelah preprocessing hanya memiliki {jumlah_kata} kata. Masukkan minimal 20 kata untuk prediksi.")
+        else:
+            # 🔄 Vectorize dan prediksi probabilitas
+            X_input = vectorizer.transform([preprocessed])
+            Y_proba = model.predict_proba(X_input)
+            Y_proba_array = Y_proba.toarray()[0]
+            Y_pred = (Y_proba_array >= threshold).astype(int)
 
-        # 🧾 Tampilkan hasil
-        st.subheader("🔍 Hasil Prediksi:")
-        any_positive = False
-        for i, val in enumerate(Y_pred):
-            if val == 1:
-                st.success(f"✅ {label_names[i]}")
-                any_positive = True
-        if not any_positive:
-            st.info("Tidak ada label yang terdeteksi dengan threshold saat ini.")
+            # 🧾 Tampilkan hasil
+            st.subheader("🔍 Hasil Prediksi:")
+            any_positive = False
+            for i, val in enumerate(Y_pred):
+                if val == 1:
+                    st.success(f"✅ {label_names[i]}")
+                    any_positive = True
+            if not any_positive:
+                st.info("Tidak ada label yang terdeteksi dengan threshold saat ini.")
